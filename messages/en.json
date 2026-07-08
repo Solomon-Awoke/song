@@ -1,0 +1,93 @@
+{
+  "Nav": {
+    "home": "Home",
+    "browse": "Songs",
+    "search": "Search",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "favorites": "Favorites",
+    "playlists": "Playlists",
+    "admin": "Admin",
+    "language": "Language",
+    "myAccount": "My Account"
+  },
+  "Search": {
+    "placeholder": "Search songs...",
+    "noResults": "No results found",
+    "searchByTitleOrLyrics": "Search by title or lyrics",
+    "results": "Results",
+    "searching": "Searching..."
+  },
+  "Song": {
+    "noTranslation": "English translation not added yet",
+    "showTranslation": "Show translation",
+    "hideTranslation": "Hide translation",
+    "autoScroll": "Auto scroll",
+    "share": "Share",
+    "downloadPdf": "Download PDF",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "addToPlaylist": "Add to playlist",
+    "biblicalRefs": "Biblical references",
+    "category": "Category",
+    "author": "Author"
+  },
+  "Categories": {
+    "title": "Categories",
+    "misgana": "Misgana (Praise)",
+    "serg": "Serg (Wedding)",
+    "nesha": "Nesha (Repentance)",
+    "achacher": "Short Songs",
+    "wereb": "Wereb (Lament)",
+    "timket": "Timket (Epiphany)",
+    "lidetGenna": "Lidet / Genna (Christmas)",
+    "kidase": "Kidase (Liturgy)",
+    "seasonal": "Seasonal Songs"
+  },
+  "Auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "signInWithGoogle": "Sign in with Google",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Invalid email or password",
+    "registerSuccess": "Registered successfully"
+  },
+  "User": {
+    "myFavorites": "My Favorites",
+    "myPlaylists": "My Playlists",
+    "settings": "Settings",
+    "logout": "Logout",
+    "noFavorites": "No favorites yet. Browse songs and tap ❤️ to add."
+  },
+  "Admin": {
+    "dashboard": "Dashboard",
+    "songs": "Songs",
+    "categories": "Categories",
+    "users": "Users",
+    "import": "Import",
+    "moderation": "Moderation",
+    "addSong": "Add Song",
+    "editSong": "Edit Song",
+    "deleteSong": "Delete Song",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "songNotFound": "Song not found",
+    "pageNotFound": "Page not found",
+    "backToHome": "Back to Home",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "copied": "Copied!",
+    "tryAgain": "Try Again"
+  }
+}

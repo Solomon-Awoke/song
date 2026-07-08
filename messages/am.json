@@ -1,0 +1,93 @@
+{
+  "Nav": {
+    "home": "መግቢያ",
+    "browse": "መዝሙራት",
+    "search": "ፍለጋ",
+    "login": "ግባ",
+    "register": "ተመዝገብ",
+    "logout": "ውጣ",
+    "favorites": "የተወደዱ",
+    "playlists": "ዝርዝሮች",
+    "admin": "አስተዳዳሪ",
+    "language": "ቋንቋ",
+    "myAccount": "መለያዬ"
+  },
+  "Search": {
+    "placeholder": "መዝሙር ፈልግ...",
+    "noResults": "ምንም ውጤት አልተገኘም",
+    "searchByTitleOrLyrics": "በርዕስ ወይም በግጥም ፈልግ",
+    "results": "ውጤቶች",
+    "searching": "በመፈለግ ላይ..."
+  },
+  "Song": {
+    "noTranslation": "የእንግሊዝኛ ትርጉም ገና አልተጨመረም",
+    "showTranslation": "ትርጉም አሳይ",
+    "hideTranslation": "ትርጉም ደብቅ",
+    "autoScroll": "አውቶማቲክ ማንበብ",
+    "share": "አጋራ",
+    "downloadPdf": "PDF አውርድ",
+    "addToFavorites": "ከልቤ ጨምር",
+    "removeFromFavorites": "ከልቤ አስወግድ",
+    "addToPlaylist": "ወደ ዝርዝር ጨምር",
+    "biblicalRefs": "የመጽሐፍ ቅዱስ ማጣቀሻዎች",
+    "category": "ምድብ",
+    "author": "ደራሲ"
+  },
+  "Categories": {
+    "title": "ምድቦች",
+    "misgana": "ምስጋና",
+    "serg": "ሰርግ",
+    "nesha": "ንስሃ",
+    "achacher": "አጫጭር መዝሙራት",
+    "wereb": "ወረብ",
+    "timket": "ጥምቀት",
+    "lidetGenna": "ልደት/ገና",
+    "kidase": "ቅዳሴ",
+    "seasonal": "የበዓላት መዝሙራት"
+  },
+  "Auth": {
+    "login": "ግባ",
+    "register": "ተመዝገብ",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "name": "ስም",
+    "signInWithGoogle": "በGoogle ግባ",
+    "noAccount": "አካውንት የለህም?",
+    "hasAccount": "አካውንት አለህ?",
+    "loginError": "ኢሜይል ወይም የይለፍ ቃል ተሳስተሃል",
+    "registerSuccess": "በተሳካ ሁኔታ ተመዝግበሃል"
+  },
+  "User": {
+    "myFavorites": "የእኔ የተወደዱ",
+    "myPlaylists": "የእኔ ዝርዝሮች",
+    "settings": "ቅንብሮች",
+    "logout": "ውጣ",
+    "noFavorites": "ገና ምንም የተወደደ የለም። መዝሙሮችን አስስ እና ❤️ ተጫን።"
+  },
+  "Admin": {
+    "dashboard": "ዳሽቦርድ",
+    "songs": "መዝሙራት",
+    "categories": "ምድቦች",
+    "users": "ተጠቃሚዎች",
+    "import": "አስመጣ",
+    "moderation": "ማረምምር",
+    "addSong": "አዲስ መዝሙር ጨምር",
+    "editSong": "መዝሙር አስተካክል",
+    "deleteSong": "መዝሙር ሰርዝ",
+    "approve": "አጽድቅ",
+    "reject": "አትቀበል"
+  },
+  "Common": {
+    "loading": "በመጫን ላይ...",
+    "error": "ስህተት ተፈጥሯል",
+    "songNotFound": "ዘማሪ አልተገኘም",
+    "pageNotFound": "ገጽ አልተገኘም",
+    "backToHome": "ወደ መግቢያ ተመለስ",
+    "save": "አስቀምጥ",
+    "cancel": "ሰርዝ",
+    "delete": "ሰርዝ",
+    "confirm": "አረጋግጥ",
+    "copied": "ተቀድቷል!",
+    "tryAgain": "እንደገና ሞክር"
+  }
+}

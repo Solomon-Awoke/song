@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Ethiopian Orthodox Tewahedo Spiritual Songs — Design Tokens */
+:root {
+  --bg-deep: #1a1a2e;
+  --bg-mid: #16213e;
+  --bg-accent: #0f3460;
+  --gold-primary: #d4a536;
+  --gold-mid: #c9952e;
+  --gold-light: #f0d080;
+  --text-primary: #f5f0e8;
+  --color-red-accent: #c0392b;
+  --color-red-accent-hover: #e74c3c;
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-error: #e74c3c;
+}
+
+@theme inline {
+  --color-bg-deep: #1a1a2e;
+  --color-bg-mid: #16213e;
+  --color-bg-accent: #0f3460;
+  --color-gold: #d4a536;
+  --color-gold-mid: #c9952e;
+  --color-gold-light: #f0d080;
+  --color-text-primary: #f5f0e8;
+  --color-red-accent: #c0392b;
+  --color-red-accent-hover: #e74c3c;
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-error: #e74c3c;
+  --font-sans: var(--font-noto-ethiopic);
+  --font-serif: var(--font-lora);
+}
+
+/*
+  Ethiopian Orthodox Cross — decorative utility
+  Usage: <div className="ethiopian-cross" />
+*/
+.ethiopian-cross::before {
+  content: "✠";
+  display: inline-block;
+  color: var(--gold-primary, #d4a536);
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep, #1a1a2e);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold-mid, #c9952e);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-primary, #d4a536);
+}
+
+/* Focus ring utility for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--gold-primary, #d4a536);
+  outline-offset: 2px;
+}
