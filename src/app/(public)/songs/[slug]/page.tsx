@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { Suspense } from "react";
 import LyricsDisplay from "@/components/song/LyricsDisplay";
+import ShareButton from "@/components/song/ShareButton";
+import ToastProvider from "@/components/ui/Toast";
 
 // ---------- Types ----------
 
@@ -72,13 +74,28 @@ export async function generateMetadata({
       .join(" • ")
       .slice(0, 100) ?? "";
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const songUrl = `${baseUrl}/songs/${slug}`;
+
+  const openGraph = {
+    title: song.titleAm,
+    description,
+    url: songUrl,
+    siteName: "የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ቤተ ክርስቲያን መንፈሳዊ መዝሙራት",
+    type: "music.song" as const,
+  };
+
   return {
     title: song.titleAm,
     description,
-    openGraph: {
+    openGraph,
+    twitter: {
+      card: "summary",
       title: song.titleAm,
       description,
-      siteName: "የኢትዮጵያ ኦርቶዶክስ ተዋሕዶ ቤተ ክርስቲያን መንፈሳዊ መዝሙራት",
+    },
+    alternates: {
+      canonical: songUrl,
     },
   };
 }
@@ -138,6 +155,43 @@ function SongNotFound() {
   );
 }
 
+// ---------- JSON-LD Structured Data ----------
+
+function SongJsonLd({
+  song,
+  songUrl,
+}: {
+  song: SongData;
+  songUrl: string;
+}) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MusicRecording",
+    name: song.titleAm,
+    ...(song.titleEn && { alternateName: song.titleEn }),
+    description: song.lyricsAm
+      .replace(/[\[\]]/g, "")
+      .split("\n")
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(" • ")
+      .slice(0, 160),
+    url: songUrl,
+    ...(song.author && { byArtist: { "@type": "MusicGroup", name: song.author } }),
+    ...(song.category?.nameAm && {
+      genre: song.category.nameAm,
+    }),
+    inLanguage: ["am", "en"],
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 // ---------- Content Fetcher ----------
 
 async function SongContent({ slug }: { slug: string }) {
@@ -147,13 +201,31 @@ async function SongContent({ slug }: { slug: string }) {
     return <SongNotFound />;
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const songUrl = `${baseUrl}/songs/${slug}`;
+
   return (
-    <LyricsDisplay
-      lyricsAm={song.lyricsAm}
-      lyricsEn={song.lyricsEn}
-      titleAm={song.titleAm}
-      titleEn={song.titleEn}
-    />
+    <>
+      <SongJsonLd song={song} songUrl={songUrl} />
+
+      <ToastProvider>
+        <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-end">
+            <ShareButton
+              url={songUrl}
+              titleAm={song.titleAm}
+              titleEn={song.titleEn}
+            />
+          </div>
+        </div>
+        <LyricsDisplay
+          lyricsAm={song.lyricsAm}
+          lyricsEn={song.lyricsEn}
+          titleAm={song.titleAm}
+          titleEn={song.titleEn}
+        />
+      </ToastProvider>
+    </>
   );
 }
 
@@ -168,3 +240,5 @@ export default async function SongPage({ params }: PageProps) {
     </Suspense>
   );
 }
+
+

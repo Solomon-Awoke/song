@@ -5,12 +5,6 @@ import Song from "@/models/Song";
 import { successResponse, errorResponse, getAuthUser } from "@/lib/api-helpers";
 
 const VALID_ROLES = ["viewer", "contributor", "editor", "admin"] as const;
-const ROLE_HIERARCHY: Record<string, number> = {
-  viewer: 0,
-  contributor: 1,
-  editor: 2,
-  admin: 3,
-};
 
 function isAdmin(user: NonNullable<Awaited<ReturnType<typeof getAuthUser>>>) {
   return (user as any).role === "admin";

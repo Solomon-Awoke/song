@@ -9,14 +9,14 @@ interface ToastData {
 }
 
 interface ToastProviderProps {
-  children: (props: { showToast: (message: string, type?: "success" | "info") => void }) => ReactNode;
+  children: ReactNode;
 }
 
 let toastListener: ((data: ToastData) => void) | null = null;
 
 /**
  * Imperative show function — call from anywhere without hook constraints.
- * Only works when a ToastProvider is mounted.
+ * Only works when a <ToastProvider> is mounted in the tree.
  */
 export function showToast(message: string, type?: "success" | "info") {
   toastListener?.({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, message, type });
@@ -29,15 +29,12 @@ export default function ToastProvider({ children }: ToastProviderProps) {
   const handleShow = useCallback((data: ToastData) => {
     setToast(data);
     setVisible(true);
-    // Auto-dismiss after 3s
     setTimeout(() => {
       setVisible(false);
-      // Clear toast after animation
       setTimeout(() => setToast(null), 300);
     }, 3000);
   }, []);
 
-  // Register/unregister the imperative listener
   useEffect(() => {
     toastListener = handleShow;
     return () => {
@@ -47,9 +44,9 @@ export default function ToastProvider({ children }: ToastProviderProps) {
 
   return (
     <>
-      {children({ showToast: (message, type) => handleShow({ id: `${Date.now()}`, message, type }) })}
+      {children}
 
-      {/* Toast portal — rendered at the end of the provider tree */}
+      {/* Toast portal */}
       {toast && (
         <div
           className={[
@@ -84,10 +81,8 @@ export default function ToastProvider({ children }: ToastProviderProps) {
               )}
             </span>
 
-            {/* Message */}
             <p className="text-sm font-medium">{toast.message}</p>
 
-            {/* Close button */}
             <button
               type="button"
               onClick={() => {

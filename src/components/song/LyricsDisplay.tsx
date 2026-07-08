@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   FiHeart,
@@ -10,6 +10,7 @@ import {
   FiPlay,
   FiPause,
 } from "react-icons/fi";
+import { generateSongPdf } from "@/lib/pdf-export";
 
 interface LyricsDisplayProps {
   lyricsAm: string;
@@ -61,6 +62,27 @@ export default function LyricsDisplay({
       stopScroll();
     } else {
       startScroll();
+    }
+  }
+
+  async function handlePdfDownload() {
+    try {
+      const blob = await generateSongPdf({
+        titleAm,
+        titleEn,
+        lyricsAm,
+        lyricsEn: lyricsEn || "",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${titleAm.replace(/[^a-zA-Z0-9\s-]/g, "").trim() || "song"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF download failed:", err);
     }
   }
 
@@ -175,6 +197,7 @@ export default function LyricsDisplay({
         </button>
         <button
           type="button"
+          onClick={handlePdfDownload}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium text-text-primary/70 transition-all duration-150 hover:border-gold/50 hover:text-gold"
           aria-label="Download PDF"
         >
