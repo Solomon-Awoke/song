@@ -142,7 +142,7 @@ export default function LyricsDisplay({
   async function handleFavorite() {
     if (!handleAuthRequired("favorite")) return;
     try {
-      const res = await fetch(`/api/songs/${slug}/favorite`, { method: "POST" });
+      const res = await fetch(`/api/songs/${slug}/favorite`, { method: "POST", credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setIsFavorited(data.favorited);
@@ -177,7 +177,7 @@ export default function LyricsDisplay({
     setPlaylistSuccess(null);
     setShowNewPlaylistInput(false);
     try {
-      const res = await fetch("/api/playlists");
+      const res = await fetch("/api/playlists", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setPlaylists(Array.isArray(data) ? data : []);
@@ -193,7 +193,7 @@ export default function LyricsDisplay({
     setPlaylistSuccess(null);
     try {
       // Get the song's MongoDB _id from the slug
-      const songRes = await fetch(`/api/songs/${slug}`);
+      const songRes = await fetch(`/api/songs/${slug}`, { credentials: "include" });
       if (!songRes.ok) throw new Error("Song not found");
       const song = await songRes.json();
       const songId = song._id;
@@ -201,6 +201,7 @@ export default function LyricsDisplay({
       const res = await fetch(`/api/playlists/${playlistId}/songs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ songId }),
       });
       if (res.ok) {
@@ -220,6 +221,7 @@ export default function LyricsDisplay({
       const res = await fetch("/api/playlists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name: newPlaylistName.trim() }),
       });
       if (res.ok) {
