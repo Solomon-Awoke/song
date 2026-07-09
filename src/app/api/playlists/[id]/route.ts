@@ -11,8 +11,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   await dbConnect();
 
   const playlist = await Playlist.findOne({ _id: id, owner: (user as any).id })
-    .populate("songs", "titleAm titleEn slug lyricsAm category")
-    .populate("category", "nameAm nameEn slug");
+    .populate("songs", "titleAm titleEn slug lyricsAm lyricsEn category")
+    .lean();
 
   if (!playlist) return errorResponse("Playlist not found", 404);
   return successResponse(playlist);
