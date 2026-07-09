@@ -223,6 +223,7 @@ async function SongContent({ slug }: { slug: string }) {
           lyricsEn={song.lyricsEn}
           titleAm={song.titleAm}
           titleEn={song.titleEn}
+          slug={song.slug}
         />
       </ToastProvider>
     </>
@@ -240,5 +241,6 @@ export default async function SongPage({ params }: PageProps) {
     </Suspense>
   );
 }
+
 
 

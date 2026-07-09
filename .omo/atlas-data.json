@@ -1,0 +1,11 @@
+[
+  {"nameAm":"ምስጋና","nameEn":"Misgana - Praise","slug":"misgana","order":1},
+  {"nameAm":"ሰርግ","nameEn":"Serg - Wedding","slug":"serg","order":2},
+  {"nameAm":"ንስሐ","nameEn":"Nesha - Repentance","slug":"nesha","order":3},
+  {"nameAm":"አጫጭር መዝሙራት","nameEn":"Short Hymns","slug":"achacher-mezmurat","order":4},
+  {"nameAm":"ወረብ","nameEn":"Wereb","slug":"wereb","order":5},
+  {"nameAm":"ጥምቀት","nameEn":"Timket - Epiphany","slug":"timket","order":6},
+  {"nameAm":"ልደት/ገና","nameEn":"Lidet/Gena - Christmas","slug":"lidet-gena","order":7},
+  {"nameAm":"ቅዳሴ","nameEn":"Kidase - Liturgy","slug":"kidase","order":8},
+  {"nameAm":"የበዓላት መዝሙራት","nameEn":"Seasonal Hymns","slug":"seasonal","order":9}
+]

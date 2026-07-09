@@ -1,14 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import MobileMenu from './MobileMenu';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const navLinks = [
     { label: 'Home', href: '/' },
-    { label: 'Browse', href: '/browse' },
+    { label: 'Browse', href: '/songs' },
     { label: 'Search', href: '/search' },
   ];
 
@@ -86,17 +89,29 @@ export default function Navbar() {
               አማ
             </button>
 
-            {/* Auth placeholder */}
-            <a
-              href="/auth/login"
-              className={[
-                'rounded-lg px-3.5 py-1.5 text-xs font-medium',
-                'bg-gold text-bg-deep',
-                'hover:bg-gold-mid transition-colors duration-150',
-              ].join(' ')}
-            >
-              Login
-            </a>
+            {/* Auth: user info or login */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden text-sm text-text-primary/70 sm:block">
+                  {user.name || user.email}
+                </span>
+                <div className="group relative">
+                  <button className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-sm font-bold text-gold transition-colors hover:bg-gold/30">
+                    {(user.name || user.email || '?').charAt(0).toUpperCase()}
+                  </button>
+                  {/* Dropdown */}
+                  <div className="absolute right-0 top-full z-50 mt-1 w-48 origin-top-right scale-95 rounded-lg border border-gold/10 bg-bg-mid p-1.5 opacity-0 shadow-2xl transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto">
+                    <a href="/my/favorites" className="block rounded-md px-3 py-2 text-sm text-text-primary/70 transition-colors hover:bg-gold/10 hover:text-gold">❤️ Favorites</a>
+                    <a href="/my/playlists" className="block rounded-md px-3 py-2 text-sm text-text-primary/70 transition-colors hover:bg-gold/10 hover:text-gold">📋 Playlists</a>
+                    {(user as any)?.role === 'admin' && <a href="/admin" className="block rounded-md px-3 py-2 text-sm text-text-primary/70 transition-colors hover:bg-gold/10 hover:text-gold">🔧 Admin</a>}
+                    <hr className="my-1 border-gold/10" />
+                    <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full rounded-md px-3 py-2 text-left text-sm text-red-accent/70 transition-colors hover:bg-red-accent/10">🚪 Logout</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <a href="/login" className="rounded-lg bg-gold px-3.5 py-1.5 text-xs font-medium text-bg-deep transition-colors hover:bg-gold-mid">Login</a>
+            )}
           </div>
         </div>
       </header>
@@ -120,19 +135,19 @@ export default function Navbar() {
             {link.label}
           </a>
         ))}
-        <div className="mt-4 border-t border-gold/10 pt-4">
-          <a
-            href="/auth/login"
-            onClick={() => setMobileMenuOpen(false)}
-            className={[
-              'block rounded-lg px-3 py-2.5 text-center text-sm font-medium',
-              'bg-gold text-bg-deep',
-              'hover:bg-gold-mid transition-colors duration-150',
-            ].join(' ')}
-          >
-            Login / Register
-          </a>
-        </div>
+        {user ? (
+          <div className="mt-4 border-t border-gold/10 pt-4 space-y-1">
+            <div className="px-3 py-2 text-sm font-medium text-gold">{user.name || user.email}</div>
+            <a href="/my/favorites" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-primary/70 hover:text-gold hover:bg-gold/5">❤️ Favorites</a>
+            <a href="/my/playlists" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-primary/70 hover:text-gold hover:bg-gold/5">📋 Playlists</a>
+            {(user as any)?.role === 'admin' && <a href="/admin" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-primary/70 hover:text-gold hover:bg-gold/5">🔧 Admin</a>}
+            <button onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: '/' }); }} className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-accent/70 hover:bg-red-accent/10">🚪 Logout</button>
+          </div>
+        ) : (
+          <div className="mt-4 border-t border-gold/10 pt-4">
+            <a href="/login" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg bg-gold px-3 py-2.5 text-center text-sm font-medium text-bg-deep hover:bg-gold-mid">Login / Register</a>
+          </div>
+        )}
       </MobileMenu>
     </>
   );

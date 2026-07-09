@@ -8,6 +8,8 @@ export interface IUser extends Document {
   role: 'viewer' | 'contributor' | 'editor' | 'admin';
   favorites: mongoose.Types.ObjectId[];
   emailVerified?: Date;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +27,8 @@ const UserSchema = new Schema<IUser>(
     favorites: [{ type: Schema.Types.ObjectId, ref: 'Song' }],
     password: { type: String },
     emailVerified: { type: Date },
+    resetToken: { type: String },
+    resetTokenExpiry: { type: Date },
   },
   { timestamps: true }
 );

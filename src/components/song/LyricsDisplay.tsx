@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import {
   FiHeart,
@@ -11,12 +12,14 @@ import {
   FiPause,
 } from "react-icons/fi";
 import { generateSongPdf } from "@/lib/pdf-export";
+import AuthPromptModal from "@/components/ui/AuthPromptModal";
 
 interface LyricsDisplayProps {
   lyricsAm: string;
   lyricsEn?: string;
   titleAm: string;
   titleEn?: string;
+  slug: string;
 }
 
 type LangTab = "am" | "en";
@@ -40,13 +43,35 @@ export default function LyricsDisplay({
   lyricsEn,
   titleAm,
   titleEn,
+  slug,
 }: LyricsDisplayProps) {
   const [mobileTab, setMobileTab] = useState<LangTab>("am");
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authAction, setAuthAction] = useState<
+    "favorite" | "playlist" | "share" | "pdf" | "general"
+  >("general");
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const { isScrolling, speed, startScroll, stopScroll, setSpeed } =
     useAutoScroll(scrollContainerRef);
   const speedBtnRef = useRef<HTMLButtonElement | null>(null);
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+
+  // ---------- Favorite state ----------
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  // ---------- Share state ----------
+  const [copied, setCopied] = useState(false);
+
+  // ---------- Playlist state ----------
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false);
+  const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
+  const [playlistSuccess, setPlaylistSuccess] = useState<string | null>(null);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [showNewPlaylistInput, setShowNewPlaylistInput] = useState(false);
 
   const amLines = formatLyrics(lyricsAm);
   const enLines = lyricsEn ? formatLyrics(lyricsEn) : [];
@@ -63,6 +88,17 @@ export default function LyricsDisplay({
     } else {
       startScroll();
     }
+  }
+
+  function handleAuthRequired(
+    action: "favorite" | "playlist" | "share" | "pdf",
+  ) {
+    if (!isLoggedIn) {
+      setAuthAction(action);
+      setShowAuthModal(true);
+      return false;
+    }
+    return true;
   }
 
   async function handlePdfDownload() {
@@ -83,6 +119,117 @@ export default function LyricsDisplay({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("PDF download failed:", err);
+    }
+  }
+
+  // ---------- Check favorite status on mount ----------
+  useEffect(() => {
+    if (!isLoggedIn || !slug) return;
+    fetch("/api/favorites")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setIsFavorited(data.some((s: any) => s.slug === slug));
+        }
+      })
+      .catch(() => {});
+  }, [isLoggedIn, slug]);
+
+  // ---------- Favorite handler ----------
+  async function handleFavorite() {
+    if (!handleAuthRequired("favorite")) return;
+    try {
+      const res = await fetch(`/api/songs/${slug}/favorite`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setIsFavorited(data.favorited);
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  // ---------- Share handler ----------
+  async function handleShare() {
+    if (!handleAuthRequired("share")) return;
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: titleAm, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // user cancelled or clipboard failed
+    }
+  }
+
+  // ---------- Playlist handlers ----------
+  async function handleOpenPlaylist() {
+    if (!handleAuthRequired("playlist")) return;
+    setShowPlaylistModal(true);
+    setLoadingPlaylists(true);
+    setPlaylistSuccess(null);
+    setShowNewPlaylistInput(false);
+    try {
+      const res = await fetch("/api/playlists");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setPlaylists(Array.isArray(data) ? data : []);
+    } catch {
+      setPlaylists([]);
+    } finally {
+      setLoadingPlaylists(false);
+    }
+  }
+
+  async function handleAddToPlaylist(playlistId: string) {
+    setAddingToPlaylist(playlistId);
+    setPlaylistSuccess(null);
+    try {
+      // Get the song's MongoDB _id from the slug
+      const songRes = await fetch(`/api/songs/${slug}`);
+      if (!songRes.ok) throw new Error("Song not found");
+      const song = await songRes.json();
+      const songId = song._id;
+
+      const res = await fetch(`/api/playlists/${playlistId}/songs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ songId }),
+      });
+      if (res.ok) {
+        setPlaylistSuccess("Added to playlist ✓");
+        setTimeout(() => setPlaylistSuccess(null), 3000);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAddingToPlaylist(null);
+    }
+  }
+
+  async function handleCreatePlaylist() {
+    if (!newPlaylistName.trim()) return;
+    try {
+      const res = await fetch("/api/playlists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newPlaylistName.trim() }),
+      });
+      if (res.ok) {
+        const playlist = await res.json();
+        setPlaylists((prev) => [...prev, playlist]);
+        setNewPlaylistName("");
+        setShowNewPlaylistInput(false);
+      }
+    } catch {
+      // silently fail
     }
   }
 
@@ -181,23 +328,35 @@ export default function LyricsDisplay({
       <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium text-text-primary/70 transition-all duration-150 hover:border-red-accent/50 hover:text-red-accent"
+          onClick={handleFavorite}
+          className={`inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium transition-all duration-150 hover:border-red-accent/50 hover:text-red-accent ${
+            isFavorited ? "text-red-accent" : "text-text-primary/70"
+          }`}
           aria-label="Favorite"
         >
-          <FiHeart size="16" aria-hidden="true" />
+          {isFavorited ? (
+            <FiHeart size="16" aria-hidden="true" className="fill-current" />
+          ) : (
+            <FiHeart size="16" aria-hidden="true" />
+          )}
           <span className="hidden sm:inline">Favorite</span>
         </button>
         <button
           type="button"
+          onClick={handleShare}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium text-text-primary/70 transition-all duration-150 hover:border-gold/50 hover:text-gold"
           aria-label="Share"
         >
           <FiShare2 size="16" aria-hidden="true" />
-          <span className="hidden sm:inline">Share</span>
+          <span className="hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
         </button>
         <button
           type="button"
-          onClick={handlePdfDownload}
+          onClick={() => {
+            if (handleAuthRequired("pdf")) {
+              void handlePdfDownload();
+            }
+          }}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium text-text-primary/70 transition-all duration-150 hover:border-gold/50 hover:text-gold"
           aria-label="Download PDF"
         >
@@ -206,6 +365,7 @@ export default function LyricsDisplay({
         </button>
         <button
           type="button"
+          onClick={handleOpenPlaylist}
           className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-bg-mid/50 px-3.5 py-2 text-xs font-medium text-text-primary/70 transition-all duration-150 hover:border-gold/50 hover:text-gold"
           aria-label="Add to playlist"
         >
@@ -339,6 +499,120 @@ export default function LyricsDisplay({
           </div>
         )}
       </div>
+
+      {/* ---------- Playlist Modal ---------- */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl border border-gold/20 bg-bg-deep p-6 shadow-2xl">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gold">Add to Playlist</h3>
+              <button
+                type="button"
+                onClick={() => setShowPlaylistModal(false)}
+                className="text-text-primary/50 hover:text-text-primary transition-colors"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Loading */}
+            {loadingPlaylists && (
+              <div className="flex justify-center py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!loadingPlaylists && playlists.length === 0 && (
+              <p className="py-6 text-center text-sm text-text-primary/50">
+                No playlists yet. Create one below.
+              </p>
+            )}
+
+            {/* Playlist list */}
+            {!loadingPlaylists && playlists.length > 0 && (
+              <ul className="mb-4 max-h-60 space-y-1 overflow-y-auto">
+                {playlists.map((pl: any) => (
+                  <li key={pl._id}>
+                    <button
+                      type="button"
+                      onClick={() => handleAddToPlaylist(pl._id)}
+                      disabled={addingToPlaylist === pl._id}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary/80 transition-colors hover:bg-gold/10 hover:text-gold disabled:opacity-50"
+                    >
+                      {addingToPlaylist === pl._id ? (
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+                      ) : (
+                        <FiPlus size="16" className="text-gold/60" />
+                      )}
+                      <span>{pl.name}</span>
+                      {pl.description && (
+                        <span className="ml-auto text-xs text-text-primary/40">
+                          {pl.songs?.length || 0} songs
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Create new playlist */}
+            {!loadingPlaylists && (
+              <div className="border-t border-gold/10 pt-4">
+                {showNewPlaylistInput ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newPlaylistName}
+                      onChange={(e) => setNewPlaylistName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void handleCreatePlaylist();
+                      }}
+                      placeholder="Playlist name..."
+                      className="flex-1 rounded-lg border border-gold/20 bg-bg-mid/50 px-3 py-2 text-sm text-text-primary outline-none focus:border-gold/50"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreatePlaylist}
+                      disabled={!newPlaylistName.trim()}
+                      className="rounded-lg bg-gold px-3 py-2 text-sm font-medium text-bg-deep transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      Create
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPlaylistInput(true)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gold/70 transition-colors hover:bg-gold/5 hover:text-gold"
+                  >
+                    <FiPlus size="16" />
+                    Create New Playlist
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Success feedback */}
+            {playlistSuccess && (
+              <div className="mt-3 rounded-lg bg-green-500/10 px-3 py-2 text-center text-sm text-green-400">
+                {playlistSuccess}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Auth Prompt Modal */}
+      <AuthPromptModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        action={authAction}
+      />
     </div>
   );
 }

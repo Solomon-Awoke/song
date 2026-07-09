@@ -113,7 +113,7 @@ function buildPdfHtml(song: SongPdfData): string {
     body {
       width: 800px;
       margin: 0;
-      padding: 40px;
+      padding: 50px 60px;
       font-family: sans-serif;
       color: #1a1a1a;
       background: #ffffff;
@@ -151,6 +151,7 @@ function buildPdfHtml(song: SongPdfData): string {
     }
     .lyrics-col {
       flex: 1;
+      text-align: center;
     }
     .lyrics-col:first-child {
       border-right: 1px solid #ddd;
