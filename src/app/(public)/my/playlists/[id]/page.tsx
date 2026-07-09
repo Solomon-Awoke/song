@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAuth } from "@/lib/auth-helpers";
+import dbConnect from "@/lib/db";
+import Playlist from "@/models/Playlist";
 import { FiArrowLeft, FiMusic } from "react-icons/fi";
 import SongCard from "@/components/song/SongCard";
 import type { SearchableSong } from "@/lib/search";
@@ -21,19 +22,6 @@ interface PlaylistDetail {
 
 interface PageProps {
   params: Promise<{ id: string }>;
-}
-
-// ---------- Helpers ----------
-
-async function getBaseUrl(): Promise<string> {
-  try {
-    const headersList = await headers();
-    const host = headersList.get("host") ?? "localhost:3000";
-    const protocol = headersList.get("x-forwarded-proto") ?? "http";
-    return `${protocol}://${host}`;
-  } catch {
-    return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  }
 }
 
 // ---------- Empty State ----------
@@ -65,19 +53,11 @@ export const dynamic = "force-dynamic";
 export default async function PlaylistDetailPage({ params }: PageProps) {
   const user = await requireAuth();
   const { id } = await params;
-  const baseUrl = await getBaseUrl();
-
-  let playlist: PlaylistDetail | null = null;
-  try {
-    const res = await fetch(`${baseUrl}/api/playlists/${id}`, {
-      cache: "no-store",
-    });
-    if (res.ok) {
-      playlist = (await res.json()) as PlaylistDetail;
-    }
-  } catch {
-    // Graceful — notFound below
-  }
+  await dbConnect();
+  const playlistDoc = await Playlist.findOne({ _id: id, owner: (user as any).id })
+    .populate("songs", "titleAm titleEn slug lyricsAm lyricsEn category")
+    .lean();
+  const playlist = playlistDoc as unknown as PlaylistDetail | null;
 
   if (!playlist) {
     notFound();

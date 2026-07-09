@@ -1,21 +1,9 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
+import dbConnect from "@/lib/db";
+import User from "@/models/User";
 import type { SearchableSong } from "@/lib/search";
 import SongCard from "@/components/song/SongCard";
-
-// ---------- Helpers ----------
-
-async function getBaseUrl(): Promise<string> {
-  try {
-    const headersList = await headers();
-    const host = headersList.get("host") ?? "localhost:3000";
-    const protocol = headersList.get("x-forwarded-proto") ?? "http";
-    return `${protocol}://${host}`;
-  } catch {
-    return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  }
-}
 
 // ---------- Empty State ----------
 
@@ -57,17 +45,12 @@ export const dynamic = "force-dynamic";
 
 export default async function FavoritesPage() {
   const user = await requireAuth();
-  const baseUrl = await getBaseUrl();
-
-  let songs: SearchableSong[] = [];
-  try {
-    const res = await fetch(`${baseUrl}/api/favorites`, { cache: "no-store" });
-    if (res.ok) {
-      songs = (await res.json()) as SearchableSong[];
-    }
-  } catch {
-    // Graceful fallback — empty grid
-  }
+  await dbConnect();
+  const userDoc = await User.findById((user as any).id).populate({
+    path: "favorites",
+    populate: { path: "category", select: "nameAm nameEn slug" },
+  }).lean();
+  const songs = ((userDoc?.favorites as any) || []) as SearchableSong[];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">

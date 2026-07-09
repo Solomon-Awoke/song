@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
-import { FiPlus, FiMusic, FiChevronRight } from "react-icons/fi";
+import dbConnect from "@/lib/db";
+import Playlist from "@/models/Playlist";
+import { FiMusic, FiChevronRight } from "react-icons/fi";
 import CreatePlaylistButton from "./CreatePlaylistButton";
 
 // ---------- Types ----------
@@ -14,19 +15,6 @@ interface PlaylistItem {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-// ---------- Helpers ----------
-
-async function getBaseUrl(): Promise<string> {
-  try {
-    const headersList = await headers();
-    const host = headersList.get("host") ?? "localhost:3000";
-    const protocol = headersList.get("x-forwarded-proto") ?? "http";
-    return `${protocol}://${host}`;
-  } catch {
-    return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  }
 }
 
 // ---------- Empty State ----------
@@ -91,17 +79,12 @@ export const dynamic = "force-dynamic";
 
 export default async function PlaylistsPage() {
   const user = await requireAuth();
-  const baseUrl = await getBaseUrl();
-
-  let playlists: PlaylistItem[] = [];
-  try {
-    const res = await fetch(`${baseUrl}/api/playlists`, { cache: "no-store" });
-    if (res.ok) {
-      playlists = (await res.json()) as PlaylistItem[];
-    }
-  } catch {
-    // Graceful fallback
-  }
+  await dbConnect();
+  const userPlaylists = await Playlist.find({ owner: (user as any).id })
+    .populate("songs", "titleAm titleEn slug")
+    .sort({ updatedAt: -1 })
+    .lean();
+  const playlists = (userPlaylists || []) as unknown as PlaylistItem[];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
