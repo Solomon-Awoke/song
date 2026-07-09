@@ -1,7 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { requireAuth } from "@/lib/auth-helpers";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import type { SearchableSong } from "@/lib/search";
 import SongCard from "@/components/song/SongCard";
 
@@ -39,18 +40,61 @@ function SongGrid({ songs }: { songs: SearchableSong[] }) {
   );
 }
 
+// ---------- Loading Spinner ----------
+
+function LoadingSpinner() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold/30 border-t-gold" />
+    </div>
+  );
+}
+
 // ---------- Page ----------
 
-export const dynamic = "force-dynamic";
+export default function FavoritesPage() {
+  const { data: session, status } = useSession();
+  const [songs, setSongs] = useState<SearchableSong[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function FavoritesPage() {
-  const user = await requireAuth();
-  await dbConnect();
-  const userDoc = await User.findById((user as any).id).populate({
-    path: "favorites",
-    populate: { path: "category", select: "nameAm nameEn slug" },
-  }).lean();
-  const songs = ((userDoc?.favorites as any) || []) as SearchableSong[];
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    setIsLoading(true);
+    fetch("/api/favorites", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch favorites");
+        return res.json();
+      })
+      .then((data) => {
+        setSongs(data ?? []);
+      })
+      .catch(() => {
+        setSongs([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [status]);
+
+  if (status === "loading" || isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-lg text-text-primary/50">Please log in to view your favorites.</p>
+          <Link
+            href="/login"
+            className="inline-block rounded-lg border border-gold/30 bg-bg-mid px-5 py-2.5 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">

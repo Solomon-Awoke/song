@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { requireAuth } from "@/lib/auth-helpers";
-import dbConnect from "@/lib/db";
-import Playlist from "@/models/Playlist";
+import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { FiArrowLeft, FiMusic } from "react-icons/fi";
 import SongCard from "@/components/song/SongCard";
 import type { SearchableSong } from "@/lib/search";
@@ -18,10 +19,6 @@ interface PlaylistDetail {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-interface PageProps {
-  params: Promise<{ id: string }>;
 }
 
 // ---------- Empty State ----------
@@ -46,21 +43,88 @@ function EmptyPlaylist({ playlistName }: { playlistName: string }) {
   );
 }
 
+// ---------- Loading Spinner ----------
+
+function LoadingSpinner() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold/30 border-t-gold" />
+    </div>
+  );
+}
+
 // ---------- Page ----------
 
-export const dynamic = "force-dynamic";
+export default function PlaylistDetailPage() {
+  const { data: session, status } = useSession();
+  const params = useParams<{ id: string }>();
+  const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function PlaylistDetailPage({ params }: PageProps) {
-  const user = await requireAuth();
-  const { id } = await params;
-  await dbConnect();
-  const playlistDoc = await Playlist.findOne({ _id: id, owner: (user as any).id })
-    .populate("songs", "titleAm titleEn slug lyricsAm lyricsEn category")
-    .lean();
-  const playlist = playlistDoc as unknown as PlaylistDetail | null;
+  useEffect(() => {
+    let cancelled = false;
+    if (status !== "authenticated") return;
+    setIsLoading(true);
+    setNotFound(false);
+    setPlaylist(null);
+    fetch(`/api/playlists/${params.id}`, { credentials: "include" })
+      .then((res) => {
+        if (res.status === 404) {
+          if (!cancelled) setNotFound(true);
+          return null;
+        }
+        if (!res.ok) throw new Error("Failed to fetch playlist");
+        return res.json();
+      })
+      .then((data) => {
+        if (data && !cancelled) {
+          setPlaylist(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [status, params.id]);
 
-  if (!playlist) {
-    notFound();
+  if (status === "loading" || isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-lg text-text-primary/50">Please log in to view your playlists.</p>
+          <Link
+            href="/login"
+            className="inline-block rounded-lg border border-gold/30 bg-bg-mid px-5 py-2.5 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !playlist) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-lg text-text-primary/50">Playlist not found.</p>
+          <Link
+            href="/my/playlists"
+            className="inline-block rounded-lg border border-gold/30 bg-bg-mid px-5 py-2.5 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+          >
+            Back to Playlists
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const songs = playlist.songs ?? [];

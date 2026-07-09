@@ -1,7 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { requireAuth } from "@/lib/auth-helpers";
-import dbConnect from "@/lib/db";
-import Playlist from "@/models/Playlist";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { FiMusic, FiChevronRight } from "react-icons/fi";
 import CreatePlaylistButton from "./CreatePlaylistButton";
 
@@ -73,18 +74,61 @@ function PlaylistCard({ playlist }: { playlist: PlaylistItem }) {
   );
 }
 
+// ---------- Loading Spinner ----------
+
+function LoadingSpinner() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold/30 border-t-gold" />
+    </div>
+  );
+}
+
 // ---------- Page ----------
 
-export const dynamic = "force-dynamic";
+export default function PlaylistsPage() {
+  const { data: session, status } = useSession();
+  const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function PlaylistsPage() {
-  const user = await requireAuth();
-  await dbConnect();
-  const userPlaylists = await Playlist.find({ owner: (user as any).id })
-    .populate("songs", "titleAm titleEn slug")
-    .sort({ updatedAt: -1 })
-    .lean();
-  const playlists = (userPlaylists || []) as unknown as PlaylistItem[];
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    setIsLoading(true);
+    fetch("/api/playlists", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch playlists");
+        return res.json();
+      })
+      .then((data) => {
+        setPlaylists(data ?? []);
+      })
+      .catch(() => {
+        setPlaylists([]);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [status]);
+
+  if (status === "loading" || isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-lg text-text-primary/50">Please log in to view your playlists.</p>
+          <Link
+            href="/login"
+            className="inline-block rounded-lg border border-gold/30 bg-bg-mid px-5 py-2.5 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
